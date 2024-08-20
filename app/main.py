@@ -10,7 +10,7 @@ class Post(BaseModel):
     title: str
     content: str
     published: bool = True
-    rating: Optional[int] = None
+
 
 my_posts = [{"title": "first", "content": "first_data", "published": True, "rating": 4, "id":1}, 
             {"title": "second", "content": "second_data", "published": True, "rating": 4, "id":2}]
@@ -20,6 +20,11 @@ def find_post(id):
     for p in my_posts:
         if p["id"] == id:
             return p
+
+def find_post_index(id):
+    for i, p, in enumerate(my_posts):
+        if p["id"] == id:
+            return i
 
 @app.get("/")
 async def root():
@@ -43,3 +48,28 @@ def get_post(id: int):
     if not post:
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"The post id {id} was not found")
     return {"post_details": post}
+
+@app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_post(id: int):
+    # deleting post
+    # find the index in the array that has required id
+    # my_posts.pop(index)
+    index = find_post_index(id)
+    if not index:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"Post id {id} not found in database")
+    my_posts.pop(index)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@app.put("/posts/{id}")
+async def update_post(id: int, post: Post):
+    index = find_post_index(id)
+    if not index:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"Post id {id} not found in database")
+    post_dict = post.model_dump()
+    print(f"post_dict : {post_dict}")
+    post_dict["id"] = id
+    print(f"post_dict : {post_dict}")
+    print(f"my_posts[index] : {my_posts[index]}")
+    my_posts[index] = post_dict
+    print(f"my_posts[index] : {my_posts[index]}")
+    return {"data": post_dict}
